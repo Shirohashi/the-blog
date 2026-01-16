@@ -65,7 +65,7 @@ export default function Blog() {
         return (
             <LandingPageLayout>
                 <div>
-                    <h2 style={{ textAlign: 'center', padding: '30px', backgroundColor: '#00adb5', color: '#fff', borderRadius: '8px' }}>Welcome to Compil-A-B.L.O.G</h2>
+                    <h2 style={{ textAlign: 'center', padding: '30px', backgroundColor: '#00adb5', color: '#fff', borderRadius: '8px' }}>Welcome to Compile-A-B.L.O.G</h2>
                     <p style={{ textAlign: 'center', padding: '10px' }}>Please <a className="underline-on-hover" href="/login" style={{ color: '#00adb5' }}>login</a> or <a className="underline-on-hover" href="/register" style={{ color: '#00adb5' }}>register</a> to start viewing the blogs.</p>
                 </div>
             </LandingPageLayout>
