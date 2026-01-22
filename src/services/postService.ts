@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase';
 import type { Post, CreatePost, UpdatePost } from '../types/post';
+import { storageService } from './storageService';
 
 const POSTS_PER_PAGE = 4; // Only 4 posts per page
 
@@ -59,6 +60,7 @@ export const postService = {
         const { data, error } = await supabase
             .from('posts')
             .insert([{ ...postData, user_id: user.id }])
+            .select()
             .single();
 
         if (error) throw error;
@@ -80,8 +82,15 @@ export const postService = {
 
         return data;
     },
-    // Delete existing post
+    // Delete existing post or image
     async deletePost(id: string): Promise<void> {
+        // Get post to find image url
+        const { data: post } = await supabase
+            .from('posts')
+            .select('image_url')
+            .eq('id', id)
+            .single();
+
         // Delete post from database
         const { error } = await supabase
             .from('posts')
@@ -89,5 +98,14 @@ export const postService = {
             .eq('id', id);
 
         if (error) throw error;
+
+        // Delete image as well for deleted posts
+        if (post?.image_url) {
+            try {
+                await storageService.deleteImage(post.image_url);
+            } catch (err) {
+                console.error('Failed to delete image:', err);
+            }
+        }
     },
 };

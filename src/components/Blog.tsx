@@ -122,6 +122,21 @@ export default function Blog() {
                                     <p style={{ color: '#666', fontSize: '14px', marginBottom: '10px' }}>
                                         {new Date(post.created_at).toLocaleDateString()}
                                     </p>
+
+                                    {post.image_url && (
+                                        <img
+                                            src={post.image_url}
+                                            alt={post.title}
+                                            style={{
+                                                maxWidth: '100%',
+                                                maxHeight: '200px',
+                                                objectFit: 'cover',
+                                                borderRadius: '4px',
+                                                marginBottom: '15px',
+                                            }}
+                                        />
+                                    )}
+
                                     {/* Content Preview */}
                                     <p style={{ marginBottom: '15px', opacity: 0.75 }}>
                                         {post.content.substring(0, 100)}

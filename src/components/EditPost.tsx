@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Layout from "./Layout";
 import { postService } from "../services/postService";
+import ImageUpload from "./ImageUpload";
 
 export default function EditPost() {
     // Get Post ID
@@ -10,6 +11,7 @@ export default function EditPost() {
     // States
     const [title, setTitle] = useState('');
     const [content, setContent] = useState('');
+    const [imageUrl, setImageUrl] = useState('');
     const [loading, setLoading] = useState(true);
     // State for when post is being updated
     const [saving, setSaving] = useState(false);
@@ -30,6 +32,7 @@ export default function EditPost() {
             const post = await postService.getPost(id);
             setTitle(post.title);
             setContent(post.content);
+            setImageUrl(post.image_url || '');
         } catch (err) {
             setError('Failed to load post.');
             console.error(err);
@@ -51,7 +54,11 @@ export default function EditPost() {
         try {
             setSaving(true);
             setError('');
-            await postService.updatePost(id, { title, content });
+            await postService.updatePost(id, {
+                title,
+                content,
+                image_url: imageUrl || undefined
+            });
             navigate('/');
         } catch (err) {
             setError('Failed to update post.');
@@ -114,6 +121,12 @@ export default function EditPost() {
                             }}
                         />
                     </div>
+
+                    <ImageUpload
+                        onImageUploaded={setImageUrl}
+                        currentImageUrl={imageUrl}
+                        folder="posts"
+                    />
 
                     {error && <p style={{ color: 'red', marginBottom: '20px' }}>{error}</p>}
 

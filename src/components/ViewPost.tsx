@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Layout from "./Layout";
 import { postService } from "../services/postService";
+import Comments from "./Comments";
 import type { Post } from "../types/post";
 
 
@@ -73,9 +74,23 @@ export default function ViewPost() {
                     {new Date(post.created_at).toLocaleTimeString()}
                 </p>
 
+                {/* Display images if it exists */}
+                {post.image_url && (
+                    <img
+                        src={post.image_url}
+                        alt={post.title}
+                        style={{
+                            maxWidth: '100%',
+                            borderRadius: '8px',
+                            marginBottom: '20px',
+                        }}
+                    />
+                )}
+
                 <div style={{ whiteSpace: 'pre-wrap', lineHeight: '1.6' }}>
                     {post.content}
                 </div>
+                <Comments postId={post.id} />
             </div>
         </Layout>
     );
