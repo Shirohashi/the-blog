@@ -18,6 +18,12 @@ export default function Comments({ postId }: CommentsProps) {
     const [loading, setLoading] = useState(false); // Tracks if comment is being uploaded/submitted
     const [error, setError] = useState(''); // Store error
 
+    // Edit states
+    const [editingCommentId, setEditingCommentId] = useState<string | null>(null); // Tracks which comment is being edited
+    const [editContent, setEditContent] = useState(''); // State for comment content edit
+    const [editImageUrl, setEditImageUrl] = useState(''); // State for comment images edit
+    const [editLoading, setEditLoading] = useState(false); // Tracks if saving edit is in progress
+
     // Loads comments
     useEffect(() => {
         loadComments();
@@ -59,6 +65,53 @@ export default function Comments({ postId }: CommentsProps) {
             console.error(err);
         } finally {
             setLoading(false);
+        }
+    };
+
+    // Handles start editing of a comment
+    // Switches comments to edit mode
+    const handleStartEdit = (comment: Comment) => {
+        setEditingCommentId(comment.id); // Marks comment as being edited
+        setEditContent(comment.content); // Loads comment content into editable comment text area
+        setEditImageUrl(comment.image_url || ''); // Loads current image if it exists
+    };
+
+    // Exits edit mode without saving
+    const handleCancelEdit = () => {
+        setEditingCommentId(null);
+        setEditContent('');
+        setEditImageUrl('');
+    };
+
+    // Save edit
+    const handleSaveEdit = async (commentId: string, oldImageUrl?: string) => {
+        // Ensures comment is not empty
+        if (!editContent.trim()) {
+            alert('Comment cannot be empty');
+            return;
+        }
+
+        try {
+            setEditLoading(true);
+
+            // Image cleanup logic
+            if (oldImageUrl && !editImageUrl) {
+                await storageService.deleteImage(oldImageUrl);
+            }
+
+            // Updates comment text, image url, updated_at timestamps to database
+            await commentService.updateComment(commentId, editContent, editImageUrl || undefined);
+
+            // Cleanup logic after saving
+            setEditingCommentId(null);
+            setEditContent('');
+            setEditImageUrl('');
+            loadComments();
+        } catch (err) {
+            alert('Failed to update comment');
+            console.error(err);
+        } finally {
+            setEditLoading(false);
         }
     };
 
@@ -151,44 +204,121 @@ export default function Comments({ postId }: CommentsProps) {
                                 border: '1px solid #eee',
                             }}
                         >
-                            {/* Display comment text */}
-                            <p style={{ marginBottom: '10px', color: '#333' }}>{comment.content}</p>
-
-                            {/* Shows any existing comment image */}
-                            {comment.image_url && (
-                                <img
-                                    src={comment.image_url}
-                                    alt="Comment attachment"
-                                    style={{
-                                        maxWidth: '100%',
-                                        maxHeight: '200px',
-                                        borderRadius: '4px',
-                                        marginBottom: '10px',
-                                    }}
-                                />
-                            )}
-                            {/* Container for comment metadata and delete button */}
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: "center" }}>
-                                <small style={{ color: '#666' }}>
-                                    {new Date(comment.created_at).toLocaleString()}
-                                </small>
-
-                                {comment.user_id === user.id && (
-                                    // Delete Button
-                                    <button
-                                        onClick={() => handleDelete(comment.id, comment.image_url)}
+                            {/* Check if comment is being edited */}
+                            {editingCommentId === comment.id ? (
+                                // Edit mode
+                                <div>
+                                    <textarea
+                                        value={editContent}
+                                        onChange={(e) => setEditContent(e.target.value)}
+                                        rows={3}
                                         style={{
-                                            padding: '4px 8px',
-                                            fontSize: '12px',
-                                            backgroundColor: '#dc3545',
-                                            color: '#fff',
-                                            border: 'none',
+                                            width: '100%',
+                                            padding: '10px',
+                                            fontSize: '14px',
+                                            border: '1px solid #ccc',
                                             borderRadius: '4px',
-                                            cursor: 'pointer',
+                                            fontFamily: 'inherit',
+                                            resize: 'vertical',
+                                            marginBottom: '10px',
                                         }}
-                                    > Delete </button>
-                                )}
-                            </div>
+                                    />
+                                    {/* Image upload (add/remove/replace) */}
+                                    <ImageUpload
+                                        onImageUploaded={setEditImageUrl}
+                                        currentImageUrl={editImageUrl}
+                                        folder="comments"
+                                    />
+
+                                    <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+                                        {/* Save button */}
+                                        <button
+                                            onClick={() => handleSaveEdit(comment.id, comment.image_url)}
+                                            disabled={editLoading}
+                                            style={{
+                                                padding: '6px 12px',
+                                                fontSize: '14px',
+                                                backgroundColor: '#00adb5',
+                                                color: '#fff',
+                                                border: 'none',
+                                                borderRadius: '4px',
+                                                cursor: editLoading ? 'not-allowed' : 'pointer',
+                                            }}
+                                        > {editLoading ? 'Saving...' : 'Save'}</button>
+                                        {/* Cancel button */}
+                                        <button
+                                            onClick={handleCancelEdit}
+                                            disabled={editLoading}
+                                            style={{
+                                                padding: '6px 12px',
+                                                fontSize: '14px',
+                                                backgroundColor: '#c5172e',
+                                                color: '#fff',
+                                                border: 'none',
+                                                borderRadius: '4px',
+                                                cursor: editLoading ? 'not-allowed' : 'pointer',
+                                            }}
+                                        > Cancel </button>
+                                    </div>
+                                </div>
+                            ) : (
+                                // View mode
+                                <>
+                                    {/* Display comment text */}
+                                    <p style={{ marginBottom: '10px', color: '#333' }}>{comment.content}</p>
+
+                                    {/* Shows any existing comment image */}
+                                    {comment.image_url && (
+                                        <img
+                                            src={comment.image_url}
+                                            alt="Comment attachment"
+                                            style={{
+                                                maxWidth: '100%',
+                                                maxHeight: '200px',
+                                                borderRadius: '4px',
+                                                marginBottom: '10px',
+                                            }}
+                                        />
+                                    )}
+                                    {/* Container for comment metadata and delete button */}
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: "center" }}>
+                                        <small style={{ color: '#666' }}>
+                                            {new Date(comment.created_at).toLocaleString()}
+                                        </small>
+
+                                        {comment.user_id === user.id && (
+                                            <div style={{ display: 'flex', gap: '8px' }}>
+                                                {/* Edit Button */}
+                                                <button
+                                                    onClick={() => handleStartEdit(comment)}
+                                                    style={{
+                                                        padding: '4px 8px',
+                                                        fontSize: '12px',
+                                                        backgroundColor: '#00adb5',
+                                                        color: '#fff',
+                                                        border: 'none',
+                                                        borderRadius: '4px',
+                                                        cursor: 'pointer',
+                                                    }}
+                                                > Edit </button>
+                                                {/* Delete Button */}
+                                                <button
+                                                    onClick={() => handleDelete(comment.id, comment.image_url)}
+                                                    style={{
+                                                        padding: '4px 8px',
+                                                        fontSize: '12px',
+                                                        backgroundColor: '#dc3545',
+                                                        color: '#fff',
+                                                        border: 'none',
+                                                        borderRadius: '4px',
+                                                        cursor: 'pointer',
+                                                    }}
+                                                > Delete </button>
+                                            </div>
+                                        )}
+                                    </div>
+                                </>
+                            )}
                         </div>
                     ))
                 )}

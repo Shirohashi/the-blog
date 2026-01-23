@@ -34,6 +34,24 @@ export const commentService = {
         return data;
     },
 
+    // Edit Comment
+    async updateComment(id: string, content: string, imageUrl?: string): Promise<Comment> {
+        // Edits comments from database
+        const { data, error } = await supabase
+            .from('comments')
+            .update({
+                content,
+                image_url: imageUrl || null,
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', id)
+            .select()
+            .single();
+
+        if (error) throw error;
+        return data;
+    },
+
     // Delete comment
     async deleteComment(id: string): Promise<void> {
         // Deletes comments from databse
