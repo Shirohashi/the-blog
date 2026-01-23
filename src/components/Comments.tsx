@@ -1,27 +1,29 @@
 import { useState, useEffect } from "react";
 import { useAppSelector } from "../store/hooks";
-import { commentService } from "../services/commentService";
-import { storageService } from "../services/storageService";
+import { commentService } from "../services/commentService"; // Comment api functions
+import { storageService } from "../services/storageService"; // Storage functions
 import type { Comment } from "../types/comment";
 import ImageUpload from './ImageUpload';
 
+// Interface for comment props
 interface CommentsProps {
     postId: string;
 }
 
 export default function Comments({ postId }: CommentsProps) {
-    const { user } = useAppSelector((state) => state.auth);
-    const [comments, setComments] = useState<Comment[]>([]);
-    const [content, setContent] = useState('');
-    const [imageUrl, setImageUrl] = useState('');
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('');
+    const { user } = useAppSelector((state) => state.auth); // Get current user
+    const [comments, setComments] = useState<Comment[]>([]); // State to store list of comments
+    const [content, setContent] = useState(''); // State to store comment content
+    const [imageUrl, setImageUrl] = useState(''); // State for optional image upload
+    const [loading, setLoading] = useState(false); // Tracks if comment is being uploaded/submitted
+    const [error, setError] = useState(''); // Store error
 
-
+    // Loads comments
     useEffect(() => {
         loadComments();
     }, [postId]);
 
+    // Fetch comments from database
     const loadComments = async () => {
         try {
             const data = await commentService.getComments(postId);
@@ -31,6 +33,7 @@ export default function Comments({ postId }: CommentsProps) {
         }
     };
 
+    // Handles form submit for comments
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
@@ -39,6 +42,7 @@ export default function Comments({ postId }: CommentsProps) {
             return;
         }
 
+        // Prepares submission to create comment
         try {
             setLoading(true);
             setError('');
@@ -58,11 +62,13 @@ export default function Comments({ postId }: CommentsProps) {
         }
     };
 
+    // Handles comment deletion
     const handleDelete = async (id: string, commentImageUrl?: string) => {
         if (!confirm('Confirm comment deletion?')) return;
 
         try {
             await commentService.deleteComment(id);
+            // Delete image if comment had one
             if (commentImageUrl) {
                 await storageService.deleteImage(commentImageUrl);
             }
@@ -73,6 +79,7 @@ export default function Comments({ postId }: CommentsProps) {
         }
     };
 
+    // Only logged in users can comment
     if (!user) {
         return (
             <div style={{ marginTop: '40px' }}>
@@ -84,7 +91,7 @@ export default function Comments({ postId }: CommentsProps) {
 
     return (
         <div style={{ marginTop: '40px', borderTop: '2px solid #ddd', paddingTop: '20px' }}>
-            <h3>Comments ({comments.length})h</h3>
+            <h3>Comments ({comments.length})</h3>
 
             {/* Comment Form */}
             <form onSubmit={handleSubmit} style={{ marginTop: '20px', marginBottom: '30px' }}>
@@ -97,12 +104,13 @@ export default function Comments({ postId }: CommentsProps) {
                         width: '100%',
                         padding: '10px',
                         fontSize: '14px',
-                        border: '1px solid #ccc',
+                        border: '1px solid #333',
                         borderRadius: '4px',
                         fontFamily: 'inherit',
                         resize: 'vertical',
                     }}
                 />
+                {/* Image upload component */}
                 <ImageUpload
                     onImageUploaded={setImageUrl}
                     currentImageUrl={imageUrl}
@@ -111,6 +119,7 @@ export default function Comments({ postId }: CommentsProps) {
 
                 {error && <p style={{ color: 'red', marginBottom: '10px' }}>{error}</p>}
 
+                {/* Submit button */}
                 <button
                     type="submit"
                     disabled={loading}
@@ -128,8 +137,9 @@ export default function Comments({ postId }: CommentsProps) {
             {/* List of Comments */}
             <div>
                 {comments.length === 0 ? (
-                    <p style={{ color: '#666' }}>No comments yet. Be the first to comment.</p>
+                    <p style={{ color: '#fff' }}>No comments yet. Be the first to comment.</p>
                 ) : (
+                    // Loop through comments and render each of them
                     comments.map((comment) => (
                         <div
                             key={comment.id}
@@ -141,8 +151,10 @@ export default function Comments({ postId }: CommentsProps) {
                                 border: '1px solid #eee',
                             }}
                         >
-                            <p style={{ marginBottom: '10px' }}>{comment.content}</p>
+                            {/* Display comment text */}
+                            <p style={{ marginBottom: '10px', color: '#333' }}>{comment.content}</p>
 
+                            {/* Shows any existing comment image */}
                             {comment.image_url && (
                                 <img
                                     src={comment.image_url}
@@ -155,13 +167,14 @@ export default function Comments({ postId }: CommentsProps) {
                                     }}
                                 />
                             )}
-
+                            {/* Container for comment metadata and delete button */}
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: "center" }}>
                                 <small style={{ color: '#666' }}>
                                     {new Date(comment.created_at).toLocaleString()}
                                 </small>
 
                                 {comment.user_id === user.id && (
+                                    // Delete Button
                                     <button
                                         onClick={() => handleDelete(comment.id, comment.image_url)}
                                         style={{

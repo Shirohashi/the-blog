@@ -122,7 +122,7 @@ export default function Blog() {
                                     <p style={{ color: '#666', fontSize: '14px', marginBottom: '10px' }}>
                                         {new Date(post.created_at).toLocaleDateString()}
                                     </p>
-
+                                    {/* Image Thumbnail */}
                                     {post.image_url && (
                                         <img
                                             src={post.image_url}

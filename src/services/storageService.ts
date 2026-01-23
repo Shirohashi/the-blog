@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase';
 
+// Create object with storage function
 export const storageService = {
     // Upload the image to supabase storage
     // Organizes image to upload whether to put it posts or comments
@@ -7,6 +8,7 @@ export const storageService = {
         // Get current user
         const { data: { user } } = await supabase.auth.getUser();
 
+        // Can't upload image when not logged in
         if (!user) throw new Error('User not authenticated');
 
         // Create unique filename

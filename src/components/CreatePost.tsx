@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "./Layout";
 import { postService } from "../services/postService";
+import ImageUpload from "./ImageUpload";
 
 export default function CreatePost() {
     // Redirect to home page after successful creation
@@ -9,6 +10,7 @@ export default function CreatePost() {
     // States for title and content of post
     const [title, setTitle] = useState('');
     const [content, setContent] = useState('');
+    const [imageUrl, setImageUrl] = useState('');
     // State for when form gets submitted
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -27,7 +29,11 @@ export default function CreatePost() {
         try {
             setLoading(true);
             setError('');
-            await postService.createPost({ title, content });
+            await postService.createPost({
+                title,
+                content,
+                image_url: imageUrl || undefined
+            });
             navigate('/');
         } catch (err) {
             setError('Failed to create post.');
@@ -84,6 +90,12 @@ export default function CreatePost() {
                             placeholder="Write your post content..."
                         />
                     </div>
+
+                    <ImageUpload
+                        onImageUploaded={setImageUrl}
+                        currentImageUrl={imageUrl}
+                        folder="posts"
+                    />
 
                     {error && <p style={{ color: 'red', marginBottom: '20px' }}>{error}</p>}
 
